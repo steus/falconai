@@ -20,5 +20,5 @@ Http::dispatch(static function (): void {
         Http::json(['employee' => $tracker->addEmployee($name)], 201);
     }
 
-    Http::json(['error' => 'Метод не поддерживается'], 405);
+    Http::json(['error' => \App\Translator::line('method_not_allowed')], 405);
 });

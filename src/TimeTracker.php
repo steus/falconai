@@ -26,13 +26,13 @@ final class TimeTracker
     {
         if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             throw new RuntimeException(
-                'Нужно расширение PHP pdo_sqlite. Установите пакет php-sqlite3.'
+                'pdo_sqlite_required'
             );
         }
 
         $directory = dirname($path);
         if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
-            throw new RuntimeException('Не удалось создать каталог для базы: ' . $directory);
+            throw new RuntimeException('data_directory:' . $directory);
         }
 
         $pdo = new PDO('sqlite:' . $path, null, null, [
@@ -54,10 +54,10 @@ final class TimeTracker
     {
         $name = $this->cleanText($name);
         if ($name === '') {
-            throw new InvalidArgumentException('Укажите имя сотрудника');
+            throw new InvalidArgumentException('employee_name_required');
         }
         if ($this->length($name) > 80) {
-            throw new InvalidArgumentException('Имя не длиннее 80 символов');
+            throw new InvalidArgumentException('employee_name_too_long');
         }
 
         $stmt = $this->pdo->prepare(
@@ -101,13 +101,13 @@ final class TimeTracker
         $this->requireEmployee($employeeId);
         $description = $this->cleanText($description);
         if ($description === '') {
-            throw new InvalidArgumentException('Опишите задачу');
+            throw new InvalidArgumentException('task_required');
         }
         if ($this->length($description) > 300) {
-            throw new InvalidArgumentException('Описание не длиннее 300 символов');
+            throw new InvalidArgumentException('task_too_long');
         }
         if ($this->activeRow($employeeId) !== null) {
-            throw new ConflictException('Таймер этого сотрудника уже запущен. Сначала остановите его.');
+            throw new ConflictException('timer_already_running');
         }
 
         try {
@@ -123,7 +123,7 @@ final class TimeTracker
         } catch (PDOException $e) {
             if (str_contains($e->getMessage(), 'UNIQUE constraint failed')) {
                 throw new ConflictException(
-                    'Таймер этого сотрудника уже запущен. Сначала остановите его.',
+                    'timer_already_running',
                     0,
                     $e
                 );
@@ -151,12 +151,12 @@ final class TimeTracker
         $this->requireEmployee($employeeId);
         $active = $this->activeRow($employeeId);
         if ($active === null) {
-            throw new ConflictException('У сотрудника нет запущенного таймера');
+            throw new ConflictException('timer_not_running');
         }
 
         $now = $this->clock->now();
         if ($now < (int) $active['started_at']) {
-            throw new ConflictException('Время остановки раньше времени старта');
+            throw new ConflictException('stop_before_start');
         }
 
         $stmt = $this->pdo->prepare(
@@ -169,7 +169,7 @@ final class TimeTracker
             'id' => $active['id'],
         ]);
         if ($stmt->rowCount() !== 1) {
-            throw new ConflictException('У сотрудника нет запущенного таймера');
+            throw new ConflictException('timer_not_running');
         }
 
         return $this->entryById((int) $active['id']);
@@ -225,7 +225,7 @@ final class TimeTracker
         $periodStart = $this->parseDate($from);
         $periodTo = $this->parseDate($to);
         if ($periodTo < $periodStart) {
-            throw new InvalidArgumentException('Дата «по» раньше даты «с»');
+            throw new InvalidArgumentException('period_reversed');
         }
 
         $startTs = $periodStart->getTimestamp();
@@ -313,7 +313,7 @@ final class TimeTracker
     private function requireEmployee(int $employeeId): void
     {
         if ($employeeId <= 0 || $this->findEmployee($employeeId) === null) {
-            throw new InvalidArgumentException('Сотрудник не найден');
+            throw new InvalidArgumentException('employee_not_found');
         }
     }
 
@@ -338,7 +338,7 @@ final class TimeTracker
     {
         $row = $this->findEmployee($id);
         if ($row === null) {
-            throw new RuntimeException('Сотрудник не найден');
+            throw new RuntimeException('employee_not_found');
         }
 
         return $this->presentEmployee($row);
@@ -412,7 +412,7 @@ final class TimeTracker
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
         if ($row === false) {
-            throw new RuntimeException('Запись не найдена');
+            throw new RuntimeException('entry_not_found');
         }
 
         return $this->presentEntry($row);
@@ -475,7 +475,7 @@ final class TimeTracker
             && (($errors['warning_count'] ?? 0) > 0 || ($errors['error_count'] ?? 0) > 0);
 
         if (!$date || $hasErrors || $date->format('Y-m-d') !== $value) {
-            throw new InvalidArgumentException('Некорректная дата: ' . $value);
+            throw new InvalidArgumentException('invalid_date:' . $value);
         }
 
         return $date;

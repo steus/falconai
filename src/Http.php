@@ -30,15 +30,15 @@ final class Http
         try {
             $handler();
         } catch (\InvalidArgumentException $e) {
-            self::json(['error' => $e->getMessage()], 422);
+            self::json(['error' => Translator::line($e->getMessage())], 422);
         } catch (ConflictException $e) {
-            self::json(['error' => $e->getMessage()], 409);
+            self::json(['error' => Translator::line($e->getMessage())], 409);
         } catch (PDOException $e) {
-            self::json(['error' => 'Ошибка базы данных'], 500);
+            self::json(['error' => Translator::line('database_error')], 500);
         } catch (RuntimeException $e) {
-            self::json(['error' => $e->getMessage()], 500);
+            self::json(['error' => Translator::line($e->getMessage())], 500);
         } catch (Throwable $e) {
-            self::json(['error' => 'Внутренняя ошибка'], 500);
+            self::json(['error' => Translator::line('internal_error')], 500);
         }
     }
 
@@ -51,7 +51,7 @@ final class Http
 
         $data = json_decode($raw, true);
         if (!is_array($data)) {
-            self::json(['error' => 'Ожидался JSON-объект'], 400);
+            self::json(['error' => Translator::line('expected_json')], 400);
         }
 
         return $data;

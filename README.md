@@ -2,7 +2,7 @@
 
 A small web application for tracking employees' working time. You can add an employee, start and stop a timer with a task description, and see each person's entries and total for a chosen period. Data is stored in a SQLite file and survives a restart. There is no login. Names in the interface and in the checks are fictional.
 
-The screen stays in Russian. PHP, SQLite, and plain JavaScript were enough, so Drupal was not used.
+The screen is in Russian and English. A language switch in the header stores the choice in the browser. PHP, SQLite, and plain JavaScript were enough, so Drupal was not used.
 
 ## How to run
 

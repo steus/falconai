@@ -70,7 +70,36 @@ h2 { margin: 0 0 14px; font-size: 24px; }
 h3 { margin: 18px 0 8px; font-size: 16px; }
 
 .lede, .hint, .status { color: var(--muted); }
-.lede { max-width: 360px; margin: 0; }
+.lede { max-width: 420px; margin: 0; }
+
+.top-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.lang {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  background: white;
+}
+
+.lang button {
+  border: 0;
+  background: transparent;
+  padding: 5px 12px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  font-size: 13px;
+}
+
+.lang button[aria-pressed="true"] {
+  background: var(--green);
+  color: white;
+}
 .hint { margin: 12px 0 0; font-size: 14px; }
 .status { min-height: 1.45em; margin: 0 0 12px; }
 
@@ -218,4 +247,5 @@ td:last-child, th:last-child {
   h1 { font-size: 32px; }
   .clock { font-size: 36px; }
   .lede { max-width: none; }
+  .top-side { align-items: start; }
 }

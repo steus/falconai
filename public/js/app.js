@@ -28,6 +28,17 @@ let busy = false;
 let shownRunningId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("[data-lang]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.lang === currentLang()) {
+        return;
+      }
+      localStorage.setItem("lang", button.dataset.lang);
+      clearError();
+      applyLanguage();
+    });
+  });
+  applyLanguage();
   setDefaultPeriod();
   employeeForm.addEventListener("submit", onAddEmployee);
   timerForm.addEventListener("submit", onTimer);
@@ -81,7 +92,7 @@ async function onTimer(event) {
   event.preventDefault();
   const employeeId = Number(employeeSelect.value);
   if (!employeeId) {
-    showError("Сначала добавьте сотрудника");
+    showError(t("add_employee_first"));
     return;
   }
   const active = activeFor(employeeId);
@@ -94,7 +105,7 @@ async function onTimer(event) {
     } else {
       const description = taskInput.value.trim();
       if (!description) {
-        showError("Опишите задачу");
+        showError(t("describe_task"));
         return;
       }
       await api("/api/timer.php", {
@@ -124,7 +135,7 @@ async function guard(action) {
   try {
     await action();
   } catch (error) {
-    showError(error.message || "Не удалось выполнить запрос");
+    showError(error.message || t("request_failed"));
   } finally {
     busy = false;
   }
@@ -151,15 +162,17 @@ async function refreshAll() {
 
 async function api(url, options = {}) {
   const response = await fetch(url, {
+    ...options,
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+      "Accept-Language": currentLang(),
+      ...(options.headers || {}),
     },
-    ...options,
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || "Запрос не выполнен");
+    throw new Error(data.error || t("request_failed"));
   }
   return data;
 }
@@ -173,10 +186,10 @@ function render() {
 }
 
 function renderPeople() {
-  peopleTitle.textContent = `Сотрудники (${state.employees.length})`;
+  peopleTitle.textContent = t("employees_count", { count: state.employees.length });
   peopleList.replaceChildren();
   if (state.employees.length === 0) {
-    peopleList.append(note("Пока никого нет", "li"));
+    peopleList.append(note(t("nobody_yet"), "li"));
     return;
   }
   const selected = selectedId();
@@ -190,7 +203,7 @@ function renderPeople() {
     if (activeFor(employee.id)) {
       const pill = document.createElement("span");
       pill.className = "pill";
-      pill.textContent = "идёт";
+      pill.textContent = t("running_short");
       button.append(pill);
     }
     button.addEventListener("click", () => selectEmployee(employee.id));
@@ -206,7 +219,7 @@ function renderSelect() {
   if (state.employees.length === 0) {
     const option = document.createElement("option");
     option.value = "";
-    option.textContent = "Нет сотрудников";
+    option.textContent = t("no_employees_option");
     employeeSelect.append(option);
     employeeSelect.disabled = true;
     return;
@@ -227,13 +240,13 @@ function renderTimer() {
   const employeeId = selectedId();
   const active = employeeId ? activeFor(employeeId) : null;
   timerButton.disabled = !employeeId;
-  timerButton.textContent = active ? "Стоп" : "Старт";
+  timerButton.textContent = active ? t("stop") : t("start");
   timerButton.className = active ? "danger" : "primary";
   if (active) {
     taskInput.disabled = true;
     taskInput.value = active.description;
     shownRunningId = active.id;
-    timerStatus.textContent = `Идёт: ${active.description}`;
+    timerStatus.textContent = t("running_with", { task: active.description });
     showClock(active.started_at);
     return;
   }
@@ -242,14 +255,14 @@ function renderTimer() {
     taskInput.value = "";
     shownRunningId = null;
   }
-  timerStatus.textContent = employeeId ? "Таймер не запущен" : "Сначала добавьте сотрудника";
+  timerStatus.textContent = employeeId ? t("timer_idle") : t("add_employee_first");
   showClock(null);
 }
 
 function renderActive() {
   activeList.replaceChildren();
   if (state.active.length === 0) {
-    activeList.append(note("Сейчас никто не работает", "li"));
+    activeList.append(note(t("nobody_working"), "li"));
     return;
   }
   state.active.forEach((entry) => {
@@ -279,16 +292,16 @@ function renderReport() {
   totalsRoot.replaceChildren();
   entriesRoot.replaceChildren();
   if (!state.report) {
-    entriesRoot.append(note("Загрузка…"));
+    entriesRoot.append(note(t("loading")));
     return;
   }
   if (state.report.totals.length === 0) {
-    totalsRoot.append(note("Сотрудников пока нет — отчёт пуст."));
+    totalsRoot.append(note(t("report_empty_people")));
     return;
   }
 
   totalsRoot.append(table(
-    ["Сотрудник", "Записей", "Всего"],
+    [t("col_employee"), t("col_entries"), t("col_total")],
     state.report.totals.map((row) => [
       row.employee_name,
       String(row.entry_count),
@@ -297,17 +310,17 @@ function renderReport() {
   ));
 
   if (state.report.entries.length === 0) {
-    entriesRoot.append(note("Записей за этот период нет."));
+    entriesRoot.append(note(t("no_entries")));
     return;
   }
 
   entriesRoot.append(table(
-    ["Сотрудник", "Задача", "Начало", "Конец", "В периоде"],
+    [t("col_employee"), t("col_task"), t("col_started"), t("col_stopped"), t("col_in_period")],
     state.report.entries.map((entry) => [
       entry.employee_name,
       entry.description,
       formatWhen(entry.started_at),
-      entry.stopped_at ? formatWhen(entry.stopped_at) : "идёт",
+      entry.stopped_at ? formatWhen(entry.stopped_at) : t("running"),
       formatClock(entry.duration_seconds),
     ]),
   ));
@@ -363,7 +376,8 @@ function activeFor(employeeId) {
 
 function employeeLabel(employee) {
   const sameName = state.employees.filter((item) => item.name === employee.name).length;
-  return sameName > 1 ? `${employee.name} (№${employee.id})` : employee.name;
+  const mark = currentLang() === "en" ? "#" : "№";
+  return sameName > 1 ? `${employee.name} (${mark}${employee.id})` : employee.name;
 }
 
 function showClock(iso) {
@@ -402,6 +416,10 @@ function formatWhen(iso) {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso || "");
   if (!match) {
     return iso || "";
+  }
+  if (currentLang() === "en") {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${Number(match[3])} ${months[Number(match[2]) - 1]} ${match[1]}, ${match[4]}:${match[5]}`;
   }
   return `${match[3]}.${match[2]}.${match[1]} ${match[4]}:${match[5]}`;
 }

@@ -11,13 +11,19 @@
   <div class="page">
     <header class="top">
       <div class="brand">
-        <span class="logo" aria-hidden="true">Тб</span>
+        <span class="logo" aria-hidden="true" data-i18n="logo">Тб</span>
         <div>
-          <p class="eyebrow">Учёт рабочего времени</p>
-          <h1>Табель</h1>
+          <p class="eyebrow" data-i18n="eyebrow">Учёт рабочего времени</p>
+          <h1 data-i18n="app_name">Табель</h1>
         </div>
       </div>
-      <p class="lede">Вымышленные сотрудники, живой таймер и итог за период. База SQLite сохраняется после перезапуска.</p>
+      <div class="top-side">
+        <div class="lang" role="group" aria-label="Язык">
+          <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+        <p class="lede" data-i18n="lede">Вымышленные сотрудники, живой таймер и итог за период. База SQLite сохраняется после перезапуска.</p>
+      </div>
     </header>
 
     <p id="alert" class="alert" role="alert" hidden></p>
@@ -28,56 +34,57 @@
           <h2 id="people-title">Сотрудники</h2>
           <form id="employee-form" class="stack">
             <label class="field">
-              <span>Имя</span>
-              <input id="employee-name" name="name" maxlength="80" required placeholder="Например, Марина Лебедева" autocomplete="off">
+              <span data-i18n="name_label">Имя</span>
+              <input id="employee-name" name="name" maxlength="80" required placeholder="Например, Марина Лебедева" data-i18n-placeholder="name_placeholder" autocomplete="off">
             </label>
-            <button class="primary" type="submit">Добавить</button>
+            <button class="primary" type="submit" data-i18n="add">Добавить</button>
           </form>
           <ul id="people" class="people"></ul>
         </section>
 
         <section class="card" aria-labelledby="timer-title">
-          <h2 id="timer-title">Таймер</h2>
+          <h2 id="timer-title" data-i18n="timer">Таймер</h2>
           <form id="timer-form">
             <label class="field">
-              <span>Сотрудник</span>
+              <span data-i18n="employee">Сотрудник</span>
               <select id="employee-select"></select>
             </label>
             <label class="field">
-              <span>Задача</span>
-              <input id="task" maxlength="300" placeholder="Например, сверка отчёта за октябрь" autocomplete="off">
+              <span data-i18n="task">Задача</span>
+              <input id="task" maxlength="300" placeholder="Например, сверка отчёта за октябрь" data-i18n-placeholder="task_placeholder" autocomplete="off">
             </label>
             <p id="timer-clock" class="clock">00:00:00</p>
             <p id="timer-status" class="status" aria-live="polite">Таймер не запущен</p>
             <button id="timer-button" class="primary" type="submit">Старт</button>
           </form>
-          <p class="hint">Пока таймер идёт, второй запуск для того же сотрудника не принимается. После остановки задачу можно начать снова.</p>
-          <h3>Сейчас работают</h3>
+          <p class="hint" data-i18n="hint_timer">Пока таймер идёт, второй запуск для того же сотрудника не принимается. После остановки задачу можно начать снова.</p>
+          <h3 data-i18n="active_heading">Сейчас работают</h3>
           <ul id="active-list" class="active-list"></ul>
         </section>
       </div>
 
       <section class="card" aria-labelledby="report-title">
         <div class="section-head">
-          <h2 id="report-title">Отчёт</h2>
+          <h2 id="report-title" data-i18n="report">Отчёт</h2>
           <form id="report-form" class="period">
             <label class="field">
-              <span>С</span>
+              <span data-i18n="from">С</span>
               <input id="from" type="date" required>
             </label>
             <label class="field">
-              <span>По</span>
+              <span data-i18n="to">По</span>
               <input id="to" type="date" required>
             </label>
-            <button class="primary" type="submit">Показать</button>
+            <button class="primary" type="submit" data-i18n="show">Показать</button>
           </form>
         </div>
-        <p class="hint">Длительность — только часть записи внутри выбранных дат. Открытый таймер считается до текущего момента и не выходит за конец периода. Время — Киев.</p>
+        <p class="hint" data-i18n="hint_report">Длительность — только часть записи внутри выбранных дат. Открытый таймер считается до текущего момента и не выходит за конец периода. Время — Киев.</p>
         <div id="totals"></div>
         <div id="entries"></div>
       </section>
     </main>
   </div>
+  <script src="/js/i18n.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

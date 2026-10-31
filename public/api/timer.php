@@ -15,13 +15,13 @@ Http::dispatch(static function (): void {
     }
 
     if ($method !== 'POST') {
-        Http::json(['error' => 'Метод не поддерживается'], 405);
+        Http::json(['error' => \App\Translator::line('method_not_allowed')], 405);
     }
 
     $body = Http::body();
     $employeeId = filter_var($body['employee_id'] ?? null, FILTER_VALIDATE_INT);
     if ($employeeId === false || $employeeId <= 0) {
-        throw new InvalidArgumentException('Не выбран сотрудник');
+        throw new InvalidArgumentException('employee_not_selected');
     }
 
     $action = $body['action'] ?? '';
@@ -36,5 +36,5 @@ Http::dispatch(static function (): void {
         Http::json(['entry' => $tracker->stopTimer((int) $employeeId)]);
     }
 
-    throw new InvalidArgumentException('Неизвестное действие');
+    throw new InvalidArgumentException('unknown_action');
 });
