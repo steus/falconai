@@ -16,6 +16,9 @@ docker compose up --build
 
 Open http://localhost:8080
 
+You can try it also on a remote machine with the same port forwarded, for example:
+http://204.168.249.163:8080/
+
 After the image exists, start it without a rebuild:
 
 ```bash
