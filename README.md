@@ -1,121 +1,126 @@
-# Табель
+# Tabel
 
-Небольшое веб-приложение для учёта рабочего времени. Можно добавить сотрудника, запустить и остановить таймер с описанием задачи, посмотреть записи и сумму по каждому сотруднику за выбранный период. Данные лежат в файле SQLite и остаются после перезапуска. Авторизации нет — так задано в тестовом. Имена в подсказках и проверках вымышленные.
+A small web application for tracking employees' working time. You can add an employee, start and stop a timer with a task description, and see each person's entries and total for a chosen period. Data is stored in a SQLite file and survives a restart. There is no login. Names in the interface and in the checks are fictional.
 
-Отдельный фреймворк не понадобился: хватает PHP, SQLite и обычного JavaScript.
+The screen stays in Russian. PHP, SQLite, and plain JavaScript were enough, so Drupal was not used.
 
-## Запуск
+## How to run
 
-Нужен Docker. Образ уже содержит PHP 8.3, `pdo_sqlite` и `mbstring`.
+Docker is the way to run it. The image already contains PHP 8.3, `pdo_sqlite`, and `mbstring`.
 
 ```bash
 docker compose up --build
 ```
 
-Открыть http://localhost:8080
+Open http://localhost:8080
 
-Остановка: `Ctrl+C`, затем `docker compose down`.
+Stop it with `Ctrl+C`, then `docker compose down`.
 
-База создаётся в `data/timetracker.sqlite` на хосте и подключается в контейнер. После перезапуска контейнера записи остаются. Каталог `data` не отдаётся сайтом.
+The database file is created on the host at `data/timetracker.sqlite` and mounted into the container. Records remain after the container restarts. The `data` directory is not served by the site.
 
-Проверки внутри образа:
+Run the checks inside the image:
 
 ```bash
 docker compose run --rm app php tests/run.php
 ```
 
-Без Docker, если в системе уже есть PHP 8.1+ с `pdo_sqlite` и `mbstring`:
+If the machine already has PHP 8.1 or newer with `pdo_sqlite` and `mbstring`:
 
 ```bash
 php -S localhost:8080 -t public
 php tests/run.php
 ```
 
-## Как устроено
+## AI tools and models
 
-- `public/index.html`, `public/css/app.css`, `public/js/app.js` — страница без фреймворков. Имена попадают в страницу только через `textContent`.
-- `public/api/*.php` — JSON: сотрудники, таймер, отчёт.
-- `src/TimeTracker.php` — правила учёта.
-- Время хранится как unix-время и показывается в часовом поясе `Europe/Kyiv`.
-- У одного сотрудника не может быть двух открытых таймеров сразу. Это проверяет код и уникальный частичный индекс SQLite. После остановки таймер можно запустить снова: появится новая запись. Два разных сотрудника могут идти параллельно.
-- Длительность в отчёте — пересечение записи с выбранными датами. Период полуоткрытый: с 00:00 первого дня до 00:00 дня, следующего за конечной датой. Открытый таймер считается до текущего момента, но не дальше конца периода. Запись с 23:00 до 01:00 делится между двумя днями. Остановка ровно в полночь не попадает в следующий день.
+The code was written in Cursor with the Grok 4.7 model. The result was then run through the test suite, `php -l`, and a browser scenario, and the mistakes found there were fixed in this repository.
 
-## ИИ-инструменты
+### Example prompts
 
-Код написан в Cursor, модель Grok 4.7. Готовый результат прогнан тестами, `php -l` и сценарием в браузере; найденные ошибки исправлены в этом же коде.
-
-### Примеры запросов
-
-Поставить тестовое целиком и выбрать стек:
+Build the assignment and choose the stack:
 
 ```text
-Тестовое задание: учёт рабочего времени.
+Test assignment: work time tracking.
 
-Создай с нуля небольшое веб-приложение для учёта рабочего времени сотрудников.
-Должно работать:
-- добавление сотрудников;
-- запуск и остановка таймера с описанием задачи;
-- просмотр записей и общего времени каждого сотрудника за выбранный период;
-- сохранение данных после перезапуска приложения.
+Create a small web application from scratch for tracking employees' working time.
+It must support:
+- adding employees;
+- starting and stopping a timer with a task description;
+- viewing entries and each employee's total time for a selected period;
+- keeping the data after the application restarts.
 
-Интерфейс простой. Авторизация и роли не нужны. Только вымышленные данные.
-В README опиши запуск, использованные ИИ-модели, примеры запросов и ошибки,
-которые нашлись и были исправлены. Добавь проверки основных сценариев,
-включая повторный запуск таймера и пустой отчёт.
+The interface can be simple. No login or roles. Fictional data only.
+In the README, describe how to run it, which AI models were used, example prompts,
+and which bugs were found and fixed. Add checks for the main scenarios,
+including starting the timer again and an empty report.
 
-Стек: PHP, vanilla JS. Drupal можно использовать, если на простом PHP будет сложно.
+Stack: PHP and vanilla JS. Drupal is fine if plain PHP is too awkward.
 ```
 
-Хранить данные без MySQL:
+Store the data without MySQL:
 
 ```text
-Можно использовать легковесный SQL-движок, чтобы не задействовать MySQL.
+You can use a lightweight SQL engine so MySQL is not required.
 ```
 
-## Ошибки, которые нашлись и были исправлены
+Run it without installing PHP extensions on the host:
 
-### Граница суток сдвигалась на текущее время
+```text
+It does not start directly. Let's put it in a Docker container.
+```
 
-`DateTimeImmutable::createFromFormat('Y-m-d', ...)` не обнуляет поля, которых нет в формате. Вечером разбор даты `2026-10-31` дал не полночь, а текущее время:
+## Bugs found and fixed
+
+### A day boundary shifted to the current time of day
+
+`DateTimeImmutable::createFromFormat('Y-m-d', ...)` leaves the fields that are not in the format as they are. In the evening, parsing `2026-10-31` produced the current time instead of midnight:
 
 ```text
 plain: 2026-10-31T20:12:16+02:00
 !Y-m-d: 2026-10-31T00:00:00+02:00
 ```
 
-Запись с 00:10 до 00:40 выпала бы из отчёта за этот день. Формат заменён на `!Y-m-d`. Отдельно отбрасывается предупреждение PHP: дата `2026-02-31` иначе молча становится 3 марта. Это закрывают проверки «запись в 00:10 попадает в тот же день» и «31 февраля и перевёрнутый период отклоняются».
+An entry from 00:10 to 00:40 would then fall outside that day's report. The parser now uses `!Y-m-d`. It also rejects PHP's warning for impossible dates: `2026-02-31` would otherwise become 3 March. The checks "an entry at 00:10 belongs to the same day" and "31 February and a reversed period are rejected" cover this.
 
-### Лишний `use` печатал предупреждение перед JSON
+### A useless `use` printed a warning in front of JSON
 
-В `public/api/timer.php` и `public/api/report.php` не было namespace, а строка `use InvalidArgumentException` всё равно стояла. `php -l` писал:
+`public/api/timer.php` and `public/api/report.php` have no namespace, but they still contained `use InvalidArgumentException`. `php -l` reported:
 
 ```text
 PHP Warning: The use statement with non-compound name 'InvalidArgumentException' has no effect
 ```
 
-При включённом `display_errors` этот текст попал бы в ответ раньше JSON, и страница не смогла бы его прочитать. Импорт убран: в файле без namespace класс и так глобальный.
+With `display_errors` on, that text would be sent before the JSON and the page could not parse the response. The import was removed. In a file without a namespace the class is already global.
 
-### Проверка HTTP обрывалась на первом отказе соединения
+### The HTTP check died on the first refused connection
 
-Обработчик ошибок в `tests/run.php` превращал любое предупреждение в исключение, в том числе подавленное через `@`. Пока встроенный сервер поднимался, первый `fsockopen` получал `Connection refused`, и цикл ожидания умирал:
+The error handler in `tests/run.php` turned every warning into an exception, including warnings suppressed with `@`. While the built-in server was starting, the first `fsockopen` got `Connection refused` and the wait loop stopped:
 
 ```text
-FAIL HTTP: пустой отчёт, повторный запуск и сохранение после перезапуска
+FAIL HTTP: empty report, starting the timer again, and data after restart
      fsockopen(): Unable to connect to 127.0.0.1:35707 (Connection refused)
 ```
 
-Теперь подавленные ошибки (`error_reporting()` в обработчике равен нулю) не прерывают ожидание. После этого сценарий проходит: пустой отчёт, повторный старт с ответом 409, остановка, новый запуск и те же данные после перезапуска процесса.
+Suppressed errors are now ignored (`error_reporting()` is zero inside the handler). The scenario then passes: an empty report, a second start while a timer is open returns 409, stop, start again, and the same data after the server process restarts.
 
-## Проверки
+## Checks
 
-`php tests/run.php` поднимает временную базу и отдельно встроенный сервер. Сейчас в наборе 19 проверок, прогон заканчивается строкой `19 прошло, 0 не прошло`.
+`php tests/run.php` uses a temporary database and, for the last scenario, the built-in server. The suite has 19 checks and finishes with `19 прошло, 0 не прошло`.
 
-В том числе:
+The assignment's two required cases are covered directly:
 
-- повторный запуск при уже идущем таймере отклоняется, открытой остаётся одна запись;
-- повторный запуск после остановки создаёт вторую запись, сумма в отчёте складывается из обеих;
-- пустой отчёт без сотрудников возвращает пустые списки, а не ошибку;
-- пустой отчёт за период, где записей нет, показывает каждого сотрудника с нулём;
-- запись через полночь делится между днями, открытый таймер не вылезает за конец периода;
-- данные читаются новым подключением к тому же файлу SQLite;
-- HTTP-сценарий повторяет пустой отчёт, ответ 409 на повторный старт и сохранение после остановки и нового запуска сервера.
+- Starting the timer again while it is already running is rejected, and only one entry stays open.
+- Starting the timer again after a stop creates a second entry, and the report total is the sum of both.
+- An empty report with no employees returns empty lists instead of an error.
+- An empty report for a period with no entries still lists every employee with zero time.
+
+The same cases are repeated over HTTP, including a 409 on a repeated start and the open timer still being there after the server process is restarted. Other checks cover an entry that crosses midnight, an open timer that must not run past the end of the period, and reading the same SQLite file from a new connection.
+
+## How it works
+
+- `public/index.html`, `public/css/app.css`, and `public/js/app.js` are the page. Employee names are inserted with `textContent`.
+- `public/api/*.php` serves JSON for employees, the timer, and the report.
+- `src/TimeTracker.php` holds the tracking rules.
+- Instants are stored as Unix time and shown in `Europe/Kyiv`.
+- One employee can have only one open timer. The code checks this, and a partial unique index in SQLite enforces it. After a stop, the timer can be started again as a new entry. Two different employees can run at the same time.
+- A report counts only the part of an entry that falls inside the selected dates. The period is half-open: from 00:00 on the first day until 00:00 on the day after the end date. An open timer counts up to the current moment, and not past the end of the period. An entry from 23:00 to 01:00 is split across the two days. Stopping exactly at midnight does not add time to the next day.
