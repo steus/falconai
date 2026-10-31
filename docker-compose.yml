@@ -7,4 +7,4 @@ services:
       TZ: Europe/Kyiv
       TIMETRACKER_DB: /app/data/timetracker.sqlite
     volumes:
-      - ./data:/app/data
+      - .:/app

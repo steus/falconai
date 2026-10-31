@@ -8,15 +8,23 @@ The screen is in Russian and English. A language switch in the header stores the
 
 Docker is the way to run it. The image already contains PHP 8.3, `pdo_sqlite`, and `mbstring`.
 
+On each machine, build the image once. It contains PHP and its extensions. The project directory is mounted into the container, so later edits and `git pull` are picked up on the next request. The same `docker-compose.yml` works on every machine: the mount path is relative to the project.
+
 ```bash
 docker compose up --build
 ```
 
 Open http://localhost:8080
 
-Stop it with `Ctrl+C`, then `docker compose down`.
+After the image exists, start it without a rebuild:
 
-The database file is created on the host at `data/timetracker.sqlite` and mounted into the container. Records remain after the container restarts. The `data` directory is not served by the site.
+```bash
+docker compose up
+```
+
+Rebuild only when `Dockerfile` or `docker/entrypoint.sh` changes. Stop it with `Ctrl+C`, then `docker compose down`.
+
+The database file is created on the host at `data/timetracker.sqlite`. Records remain after the container restarts. The `data` directory is not served by the site.
 
 Run the checks inside the image:
 
