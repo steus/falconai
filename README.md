@@ -32,7 +32,7 @@ Run the checks inside the image:
 docker compose run --rm app php tests/run.php
 ```
 
-If the machine already has PHP 8.1 or newer with `pdo_sqlite` and `mbstring`:
+If the machine already has PHP 8.3 with `pdo_sqlite` and `mbstring` (`php8.3-sqlite3` and `php8.3-mbstring`):
 
 ```bash
 php -S localhost:8080 -t public
