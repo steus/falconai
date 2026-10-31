@@ -1,0 +1,5 @@
+.git
+.idea
+data/*.sqlite
+data/*.sqlite-wal
+data/*.sqlite-shm

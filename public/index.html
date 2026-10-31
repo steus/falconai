@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Табель — учёт рабочего времени</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231f6b4a'/%3E%3Ctext x='8' y='12' text-anchor='middle' font-size='9' fill='white' font-family='Georgia'%3EТб%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">Тб</span>
+        <div>
+          <p class="eyebrow">Учёт рабочего времени</p>
+          <h1>Табель</h1>
+        </div>
+      </div>
+      <p class="lede">Вымышленные сотрудники, живой таймер и итог за период. База SQLite сохраняется после перезапуска.</p>
+    </header>
+
+    <p id="alert" class="alert" role="alert" hidden></p>
+
+    <main>
+      <div class="columns">
+        <section class="card" aria-labelledby="people-title">
+          <h2 id="people-title">Сотрудники</h2>
+          <form id="employee-form" class="stack">
+            <label class="field">
+              <span>Имя</span>
+              <input id="employee-name" name="name" maxlength="80" required placeholder="Например, Марина Лебедева" autocomplete="off">
+            </label>
+            <button class="primary" type="submit">Добавить</button>
+          </form>
+          <ul id="people" class="people"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="timer-title">
+          <h2 id="timer-title">Таймер</h2>
+          <form id="timer-form">
+            <label class="field">
+              <span>Сотрудник</span>
+              <select id="employee-select"></select>
+            </label>
+            <label class="field">
+              <span>Задача</span>
+              <input id="task" maxlength="300" placeholder="Например, сверка отчёта за октябрь" autocomplete="off">
+            </label>
+            <p id="timer-clock" class="clock">00:00:00</p>
+            <p id="timer-status" class="status" aria-live="polite">Таймер не запущен</p>
+            <button id="timer-button" class="primary" type="submit">Старт</button>
+          </form>
+          <p class="hint">Пока таймер идёт, второй запуск для того же сотрудника не принимается. После остановки задачу можно начать снова.</p>
+          <h3>Сейчас работают</h3>
+          <ul id="active-list" class="active-list"></ul>
+        </section>
+      </div>
+
+      <section class="card" aria-labelledby="report-title">
+        <div class="section-head">
+          <h2 id="report-title">Отчёт</h2>
+          <form id="report-form" class="period">
+            <label class="field">
+              <span>С</span>
+              <input id="from" type="date" required>
+            </label>
+            <label class="field">
+              <span>По</span>
+              <input id="to" type="date" required>
+            </label>
+            <button class="primary" type="submit">Показать</button>
+          </form>
+        </div>
+        <p class="hint">Длительность — только часть записи внутри выбранных дат. Открытый таймер считается до текущего момента и не выходит за конец периода. Время — Киев.</p>
+        <div id="totals"></div>
+        <div id="entries"></div>
+      </section>
+    </main>
+  </div>
+  <script src="/js/app.js"></script>
+</body>
+</html>
